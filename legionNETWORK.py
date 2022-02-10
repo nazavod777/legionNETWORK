@@ -99,7 +99,7 @@ def mainth():
 				logger.error(f'Unexpected error: {str(error)}')
 		else:
 			with open('LegionAccounts.txt', 'a', encoding='utf-8') as file:
-				file.write(f'{str(password)}!|{str(username)}@oosln.com|{str(nameOfAcc)}|{udid}\n')
+				file.write(f'{str(password)}!:{str(username)}@oosln.com:{str(nameOfAcc)}:{udid}\n')
 			logger.success(f'Аккаунт {username} успшено зарегистрирован')
 
 def cleaner():
