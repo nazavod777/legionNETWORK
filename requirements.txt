@@ -6,3 +6,4 @@ random-username==1.0.2
 requests==2.27.1
 urllib3==1.26.7
 uuid==1.30
+PySocks==1.7.1
