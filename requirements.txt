@@ -1,12 +1,8 @@
 beautifulsoup4==4.10.0
 names==0.3.0
-undetected-chromedriver==2.2.7
 cloudscraper==1.2.58
 loguru==0.5.3
 random-username==1.0.2
 requests==2.27.1
 urllib3==1.26.7
 uuid==1.30
-lxml==4.6.2
-selenium==4.1.0
-selenium-wire==4.5.5
