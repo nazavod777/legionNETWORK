@@ -1,12 +1,11 @@
 import cloudscraper
-import string
 from bs4 import BeautifulSoup
 from ctypes import windll
 from gc import collect
 from loguru import logger
 from names import get_first_name
 from os import system
-from random import choice
+from random import choice, randint
 from random_username.generate import generate_username
 from requests import get
 from sys import stderr
@@ -46,9 +45,9 @@ def mainth():
 				scraper.proxies.update({'http': f'{proxy_type}://{proxy_str}', 'https': f'{proxy_type}://{proxy_str}'})
 			scraper.headers.update({'Content-Type': 'application/json', 'cf-visitor': 'https', 'User-Agent': 'Legion/5.2 CFNetwork/1209 Darwin/20.2.0', 'Connection': 'keep-alive', 'Accept': 'application/json, text/plain, */*', 'Accept-Language': 'ru', 'x-forwarded-proto': 'https', 'Accept-Encoding': 'gzip, deflate, br'})
 
-			username = generate_username()[0]
+			username = generate_username()[0]+''.join([choice('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789' if i != 5 else 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789') for i in range(5)])
 			nameOfAcc = get_first_name()
-			password = ''.join(choice(string.ascii_uppercase + string.digits + string.ascii_lowercase) for i in range(9))
+			password = str(randint(0,9))+''.join([choice('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789' if i != 25 else 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789') for i in range(25)])
 			body = {"password":str(password)+"!","email":str(username)+"@oosln.com","name":str(nameOfAcc),"udid":udid,"referralCode":str(refferalCode)}
 			r = scraper.post('https://api.legionnetwork.io/api1/user/create', json = body)
 
@@ -90,7 +89,7 @@ def mainth():
 			if str(error) == 'email_timeout':
 				logger.error(f'Error: email timeout')
 			elif str(error) == 'wrong_code':
-				if 'used Cloudflare to restrict access' in str(r.text):
+				if 'used Cloudflare to restrict access' in str(r.text) or r.status_code == 504:
 					logger.error('CloudFlare')
 				else:
 					logger.error(f'Error: wrong code - {str(r.status_code)}')
