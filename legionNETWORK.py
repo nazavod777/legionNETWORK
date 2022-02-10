@@ -1,6 +1,5 @@
 import cloudscraper
 import string
-import undetected_chromedriver.v2 as uc
 from bs4 import BeautifulSoup
 from ctypes import windll
 from gc import collect
@@ -25,14 +24,26 @@ logger.remove()
 logger.add(stderr, format="<white>{time:HH:mm:ss}</white> | <level>{level: <8}</level> | <cyan>{line}</cyan> - <white>{message}</white>")
 
 refferalCode = str(input('Введите ваш реферальный код: '))
-sleep_after_success = int(input('Время сна после регистрации аккаунта: '))
 threads = int(input('Количество потоков: '))
+use_proxy = str(input('Использовать Proxy? (y/N): '))
+if use_proxy in ('y', 'Y'):
+	proxy_type = str(input('Укажите тип прокси (http/https/socks4/socks5): '))
+	proxy_folder = str(input('Перетяните TXT файл с прокси, формат: (ip:port or user:pass@ip:port): '))
+
+def take_proxy():
+	with open(proxy_folder) as file:
+		lines = file.readlines()
+		proxy_str = choice(lines)
+	return proxy_str
 
 def mainth():
 	while True:
 		try:
 			udid = str(uuid4())
 			scraper = cloudscraper.create_scraper()
+			if use_proxy in ('y', 'Y'):
+				proxy_str = take_proxy()
+				scraper.proxies.update({'http': f'{proxy_type}://{proxy_str}', 'https': f'{proxy_type}://{proxy_str}'})
 			scraper.headers.update({'Content-Type': 'application/json', 'cf-visitor': 'https', 'User-Agent': 'Legion/5.2 CFNetwork/1209 Darwin/20.2.0', 'Connection': 'keep-alive', 'Accept': 'application/json, text/plain, */*', 'Accept-Language': 'ru', 'x-forwarded-proto': 'https', 'Accept-Encoding': 'gzip, deflate, br'})
 
 			username = generate_username()[0]
@@ -51,7 +62,7 @@ def mainth():
 					if len(r_json) > 0:
 						latest_mail = r_json[0].get('id')
 						req = get(f"https://www.1secmail.com/mailbox/?action=mailBody&id={latest_mail}&login={username}&domain=oosln.com")
-						urlVerify = BeautifulSoup(req.text,'lxml').find_all("a", href=True)[1].get("href")
+						urlVerify = BeautifulSoup(req.text,'html').find_all("a", href=True)[1].get("href")
 						logger.success(f'Письмо для {username} успешно получено')
 						break
 					else:
@@ -59,10 +70,20 @@ def mainth():
 							raise Exception('email_timeout')
 						else:
 							sleep(3)
-				options = uc.ChromeOptions()
-				options.headless = True
-				chrome = uc.Chrome(options=options)
-				chrome.get(urlVerify)
+				for i in range(30):
+					r = scraper.get(urlVerify).url
+					if 'token=' in r:
+						token = r.split('=')[-1]
+						break
+					elif i == 29:
+						raise Exception('token_timeout')
+
+				for i in range(30):
+					r = scraper.get('https://api.legionnetwork.io/api1/user/verify/link?token='+str(token)).text
+					if r == '{"msg":"Verified"}':
+						break
+					elif i == 29:
+						raise Exception('token_timeout')
 			else:
 				raise Exception('wrong_code')
 		except Exception as error:
@@ -73,18 +94,14 @@ def mainth():
 					logger.error('CloudFlare')
 				else:
 					logger.error(f'Error: wrong code - {str(r.status_code)}')
+			elif str(error) == 'token_timeout':
+				logger.error(f'Token timeout for {str(username)}')
 			else:
 				logger.error(f'Unexpected error: {str(error)}')
 		else:
 			with open('LegionAccounts.txt', 'a', encoding='utf-8') as file:
 				file.write(f'{str(password)}!|{str(username)}@oosln.com|{str(nameOfAcc)}|{udid}\n')
 			logger.success(f'Аккаунт {username} успшено зарегистрирован')
-			sleep(sleep_after_success)
-		finally:
-			try:
-				chrome.close()
-			except:
-				pass
 
 def cleaner():
 	while True:
