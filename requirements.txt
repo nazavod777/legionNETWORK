@@ -7,3 +7,4 @@ random-username==1.0.2
 requests==2.27.1
 urllib3==1.26.7
 uuid==1.30
+lxml==4.6.2
